@@ -34,7 +34,7 @@ export const posthogProxy = () => {
   return async (
     req: Request,
     res: Response,
-    next: NextFunction
+    _next: NextFunction
   ): Promise<void> => {
     try {
       // Express already stripped the prefix, so req.url is the pathname
