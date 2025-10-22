@@ -37,7 +37,6 @@ export const posthogProxy = () => {
     _next: NextFunction
   ): Promise<void> => {
     try {
-      // Express already stripped the prefix, so req.url is the pathname
       const pathname = req.url;
       const posthogHost = pathname.startsWith("/static/")
         ? ASSET_HOST
@@ -71,15 +70,21 @@ export const posthogProxy = () => {
       headers.delete("cookie");
       headers.delete("connection");
 
+      // Remove content-length - let fetch recalculate it
+      headers.delete("content-length");
+
       // Prepare fetch options
       const fetchOptions: RequestInit = {
         method: req.method,
         headers,
       };
 
-      // Add body for POST/PUT/PATCH requests
+      // For POST/PUT/PATCH, use the raw body
       if (req.method && !["HEAD", "GET"].includes(req.method)) {
-        fetchOptions.body = JSON.stringify(req.body);
+        // Use req as the body stream directly
+        fetchOptions.body = req as any;
+        // @ts-ignore - duplex is needed for streaming bodies
+        fetchOptions.duplex = "half";
       }
 
       // Make the request to PostHog
