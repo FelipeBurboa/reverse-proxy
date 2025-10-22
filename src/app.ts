@@ -11,7 +11,7 @@ app.set("trust proxy", 1);
 
 app.use(helmet());
 
-// CORS with pattern matching for dev, lovable, and vercel
+// CORS
 const corsOptions = {
   origin: (
     origin: string | undefined,
@@ -20,10 +20,10 @@ const corsOptions = {
     if (!origin) return callback(null, true);
 
     const allowedPatterns = [
-      /^http:\/\/localhost:\d+$/, // localhost
-      /^https:\/\/.*\.lovable\.app$/, // lovable
-      /^https:\/\/.*\.vercel\.app$/, // vercel
-      /^https:\/\/crm\.ventaplay\.com$/, // ventaplay crm
+      /^http:\/\/localhost:\d+$/,
+      /^https:\/\/.*\.lovable\.app$/,
+      /^https:\/\/.*\.vercel\.app$/,
+      /^https:\/\/crm\.ventaplay\.com$/,
     ];
 
     const isAllowed = allowedPatterns.some((pattern) => pattern.test(origin));
@@ -41,7 +41,7 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-// Body parsing middleware
+// Body parsing
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
@@ -54,18 +54,18 @@ if (process.env.NODE_ENV === "development") {
 
 // Rate limiting for PostHog proxy
 const proxyLimiter = rateLimit({
-  windowMs: 1 * 60 * 1000, // 1 minute
-  max: 100, // 100 requests per minute per IP
+  windowMs: 1 * 60 * 1000,
+  max: 100,
   message: "Too many requests from this IP",
   standardHeaders: true,
   legacyHeaders: false,
 });
 
-// PostHog proxy middleware - CHANGE THIS PREFIX TO SOMETHING UNIQUE!
+// PostHog proxy - notice we don't pass the prefix to the function anymore
 const POSTHOG_PREFIX = process.env.POSTHOG_PREFIX || "/api/v2/telemetry-q7x9p";
-app.use(POSTHOG_PREFIX, proxyLimiter, posthogProxy(POSTHOG_PREFIX));
+app.use(POSTHOG_PREFIX, proxyLimiter, posthogProxy());
 
-// Health check endpoint
+// Health check
 app.get("/health", (_req: Request, res: Response) => {
   res.status(200).json({
     status: "ok",

@@ -30,23 +30,22 @@ const fromHeaders = (headers: Headers): Record<string, string> => {
   return nodeHeaders;
 };
 
-export const posthogProxy = (prefix: string) => {
+export const posthogProxy = () => {
   return async (
     req: Request,
     res: Response,
     next: NextFunction
   ): Promise<void> => {
-    // Only handle requests that start with the prefix
-    if (!req.url.startsWith(prefix)) {
-      next();
-      return;
-    }
-
     try {
-      const pathname = req.url.slice(prefix.length);
+      // Express already stripped the prefix, so req.url is the pathname
+      const pathname = req.url;
       const posthogHost = pathname.startsWith("/static/")
         ? ASSET_HOST
         : API_HOST;
+
+      console.log(
+        `[PostHog Proxy] ${req.method} ${pathname} -> https://${posthogHost}${pathname}`
+      );
 
       // Build headers
       const headers = toHeaders(req.headers);
@@ -93,6 +92,8 @@ export const posthogProxy = (prefix: string) => {
       const responseHeaders = new Headers(response.headers);
       const body = await response.text();
 
+      console.log(`[PostHog Proxy] Response: ${response.status}`);
+
       // Handle content-encoding issues
       if (responseHeaders.has("content-encoding")) {
         responseHeaders.delete("content-encoding");
@@ -107,8 +108,8 @@ export const posthogProxy = (prefix: string) => {
 
       res.send(body);
     } catch (error) {
-      console.error("PostHog proxy error:", error);
-      next(error);
+      console.error("[PostHog Proxy] Error:", error);
+      res.status(502).json({ error: "Bad gateway" });
     }
   };
 };
