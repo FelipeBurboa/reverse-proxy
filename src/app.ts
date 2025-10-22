@@ -41,6 +41,10 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
+// Body parsing
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+
 // Logging
 if (process.env.NODE_ENV === "development") {
   app.use(morgan("dev"));
@@ -57,18 +61,9 @@ const proxyLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// PostHog proxy - use raw body parser
+// PostHog proxy - notice we don't pass the prefix to the function anymore
 const POSTHOG_PREFIX = process.env.POSTHOG_PREFIX || "/api/v2/telemetry-q7x9p";
-app.use(
-  POSTHOG_PREFIX,
-  express.raw({ type: "*/*", limit: "10mb" }), // Parse as raw buffer
-  proxyLimiter,
-  posthogProxy()
-);
-
-// Body parsing for other routes (JSON)
-app.use(express.json({ limit: "10mb" }));
-app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+app.use(POSTHOG_PREFIX, proxyLimiter, posthogProxy());
 
 // Health check
 app.get("/health", (_req: Request, res: Response) => {
