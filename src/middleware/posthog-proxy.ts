@@ -71,6 +71,10 @@ export const posthogProxy = () => {
       headers.delete("cookie");
       headers.delete("connection");
 
+      // Delete content-length and transfer-encoding - let fetch recalculate from body
+      headers.delete("content-length");
+      headers.delete("transfer-encoding");
+
       // Prepare fetch options
       const fetchOptions: RequestInit = {
         method: req.method,
