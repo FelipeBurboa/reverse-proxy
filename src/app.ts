@@ -63,7 +63,7 @@ const proxyLimiter = rateLimit({
 
 // PostHog proxy - notice we don't pass the prefix to the function anymore
 const POSTHOG_PREFIX = process.env.POSTHOG_PREFIX || "/api/v2/telemetry-q7x9p";
-app.use(POSTHOG_PREFIX, proxyLimiter, posthogProxy());
+app.use(POSTHOG_PREFIX, express.raw({ type: '*/*', limit: '10mb' }), proxyLimiter, posthogProxy());
 
 // Health check
 app.get("/health", (_req: Request, res: Response) => {

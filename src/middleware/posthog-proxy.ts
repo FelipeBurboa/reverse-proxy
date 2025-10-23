@@ -79,7 +79,7 @@ export const posthogProxy = () => {
 
       // Add body for POST/PUT/PATCH requests
       if (req.method && !["HEAD", "GET"].includes(req.method)) {
-        fetchOptions.body = JSON.stringify(req.body);
+        fetchOptions.body = req.body;
       }
 
       // Make the request to PostHog
